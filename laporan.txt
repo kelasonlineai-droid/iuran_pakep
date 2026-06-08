@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Laporan Data Iuran</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            background-color: #f0f4f8;
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            padding: 0;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+        .container {
+            width: 100%;
+            max-width: 100%;
+            padding: 8px;
+            margin: 0 auto;
+            position: relative;
+        }
+        #btnFullscreen {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            z-index: 99;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            padding: 0;
+            border-radius: 6px;
+            background-color: #e2e8f0;
+            color: #334155;
+            border: none;
+        }
+        #btnFullscreen:hover, #btnFullscreen.active {
+            background-color: #2563eb;
+            color: white;
+        }
+        .card {
+            border-radius: 10px;
+            border: none;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+            margin-bottom: 8px;
+            background: #ffffff;
+            overflow: hidden;
+        }
+        .card-body {
+            padding: 12px !important;
+        }
+        .header-title {
+            color: #1e293b;
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+        .sub-title {
+            font-size: 0.75rem;
+            color: #64748b;
+        }
+        .form-label {
+            font-weight: 500;
+            color: #344767;
+            font-size: 0.8rem;
+            margin-bottom: 3px;
+        }
+        .form-control {
+            padding: 8px 10px;
+            font-size: 0.9rem;
+            border-radius: 6px;
+            border: 1px solid #d2d6dc;
+            height: auto;
+        }
+        .btn {
+            padding: 8px 12px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            border-radius: 6px;
+            border: none;
+            height: 40px;
+        }
+        .btn-cari { background-color: #10b981; color: white; }
+        .btn-cari:active { background-color: #059669 !important; }
+        .btn-semua { background-color: #6366f1; color: white; }
+        .btn-semua:active { background-color: #4f46e5 !important; }
+        .alert { 
+            border-radius: 6px; 
+            font-size: 0.8rem; 
+            padding: 8px 10px; 
+            margin-bottom: 8px;
+        }
+        .table-wrapper {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            border-radius: 6px;
+            border: 1px solid #e2e8f0;
+            margin-top: 8px;
+            background: #ffffff;
+        }
+        table.data-table {
+            width: 100%;
+            min-width: 500px; /* Diperkecil lebar minimalnya */
+            border-collapse: collapse;
+            font-size: 0.8rem;
+        }
+        table.data-table th {
+            background-color: #f1f5f9;
+            padding: 6px 8px; /* Padding dikurangi biar rapat */
+            text-align: center;
+            font-weight: 600;
+            border: 1px solid #e2e8f0;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            white-space: nowrap;
+        }
+        table.data-table td {
+            padding: 6px 8px; /* Padding dikurangi biar rapat */
+            border: 1px solid #e2e8f0;
+            text-align: left; /* Tetap rata kiri */
+            background-color: #ffffff;
+            vertical-align: middle;
+        }
+        table.data-table tr:nth-child(even) td {
+            background-color: #f8fafc;
+        }
+
+        /* ✅ PENGATURAN LEBAR KOLOM AGAR DEKAT & PAS */
+        table.data-table th:nth-child(1), 
+        table.data-table td:nth-child(1) { width: 80px; } /* Tanggal */
+        
+        table.data-table th:nth-child(2), 
+        table.data-table td:nth-child(2) { width: 160px; max-width: 160px; } /* Nama Warga (Dibatasi) */
+        
+        table.data-table th:nth-child(3), 
+        table.data-table td:nth-child(3) { width: 110px; } /* Jumlah (Rp) - Ukuran pas */
+        
+        table.data-table th:nth-child(4), 
+        table.data-table td:nth-child(4) { width: 60px; } /* Jam */
+
+        hr { margin: 12px 0; opacity: 0.1; }
+
+        .pagination-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 6px;
+            margin-top: 12px;
+            flex-wrap: wrap;
+        }
+        .page-btn {
+            width: 32px;
+            height: 32px;
+            padding: 0;
+            font-size: 0.8rem;
+            border-radius: 4px;
+            border: 1px solid #cbd5e1;
+            background: #ffffff;
+            color: #334155;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .page-btn.active {
+            background-color: #2563eb;
+            color: white;
+            border-color: #2563eb;
+            font-weight: 600;
+        }
+        .page-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .page-nav {
+            width: auto;
+            padding: 0 8px;
+        }
+        @media (min-width: 480px) {
+            .container { max-width: 420px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <button id="btnFullscreen" title="Mode Layar Penuh">
+            <i class="bi bi-arrows-fullscreen"></i>
+        </button>
+
+        <div class="text-center mb-2 mt-1">
+            <h2 class="header-title mb-1">
+                <i class="bi bi-table text-success"></i> Laporan Data Iuran
+            </h2>
+            <p class="sub-title">Cari & Lihat Data Pembayaran</p>
+        </div>
+
+        <div class="alert alert-danger text-center d-none" id="pesanGagal" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-1"></i> <span id="teksError"></span>
+        </div>
+
+        <div class="card">
+            <div class="card-body">
+                <div class="row g-2 mb-2">
+                    <div class="col-6">
+                        <label class="form-label small-text">Dari Tanggal</label>
+                        <input type="date" class="form-control" id="tglAwal">
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label small-text">Sampai Tanggal</label>
+                        <input type="date" class="form-control" id="tglAkhir">
+                    </div>
+                    <div class="col-6 d-grid">
+                        <button type="button" class="btn btn-cari w-100" id="btnCari">
+                            <i class="bi bi-search"></i> Cari Data
+                        </button>
+                    </div>
+                    <div class="col-6 d-grid">
+                        <button type="button" class="btn btn-semua w-100" id="btnSemua">
+                            <i class="bi bi-list-ul"></i> Tampil Semua
+                        </button>
+                    </div>
+                </div>
+
+                <hr>
+
+                <div id="wadahTabel">
+                    <div class="table-wrapper">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Tanggal</th>
+                                    <th>Nama Warga</th>
+                                    <th>Jumlah (Rp)</th>
+                                    <th>Jam</th>
+                                </tr>
+                            </thead>
+                            <tbody id="isiTabelData">
+                                <tr>
+                                    <td colspan="4" class="text-center text-muted py-3">Tekan tombol Cari atau Tampil Semua</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="pagination-container" id="wadahPagination"></div>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="text-center text-muted mt-1 mb-3">
+            <small class="small-text"><i class="bi bi-info-circle me-1"></i> Sistem Terhubung Google Sheet</small>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        const pesanGagal = document.getElementById('pesanGagal');
+        const teksError = document.getElementById('teksError');
+        const btnCari = document.getElementById('btnCari');
+        const btnSemua = document.getElementById('btnSemua');
+        const tglAwal = document.getElementById('tglAwal');
+        const tglAkhir = document.getElementById('tglAkhir');
+        const wadahTabel = document.getElementById('wadahTabel');
+        const isiTabelData = document.getElementById('isiTabelData');
+        const wadahPagination = document.getElementById('wadahPagination');
+        const btnFullscreen = document.getElementById('btnFullscreen');
+        const iconFullscreen = btnFullscreen.querySelector('i');
+
+        // ✅ FITUR LAYAR PENUH
+        btnFullscreen.addEventListener('click', function() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+                iconFullscreen.className = 'bi bi-fullscreen-exit';
+                btnFullscreen.classList.add('active');
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                    iconFullscreen.className = 'bi bi-arrows-fullscreen';
+                    btnFullscreen.classList.remove('active');
+                }
+            }
+        });
+
+        // ✅ KONFIGURASI: 25 DATA PER HALAMAN
+        const ITEM_PER_PAGE = 25;
+        let dataGlobal = [];
+        let halamanSaatIni = 1;
+
+        btnSemua.addEventListener('click', function() {
+            isiTabelData.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-3">⏳ Memuat semua data...</td></tr>';
+            wadahPagination.innerHTML = '';
+            
+            google.script.run
+                .withSuccessHandler(function(data) {
+                    dataGlobal = data;
+                    halamanSaatIni = 1;
+                    renderHalaman();
+                })
+                .withFailureHandler(function(err) {
+                    pesanGagal.classList.remove('d-none');
+                    teksError.textContent = "❌ Gagal memuat: " + err;
+                    setTimeout(() => pesanGagal.classList.add('d-none'), 3000);
+                })
+                .ambilSemuaDataIuran();
+        });
+
+        btnCari.addEventListener('click', function() {
+            if(!tglAwal.value || !tglAkhir.value){
+                pesanGagal.classList.remove('d-none');
+                teksError.textContent = "⚠️ Harap isi tanggal awal dan akhir!";
+                setTimeout(() => pesanGagal.classList.add('d-none'), 3000);
+                return;
+            }
+            if(new Date(tglAwal.value) > new Date(tglAkhir.value)){
+                pesanGagal.classList.remove('d-none');
+                teksError.textContent = "⚠️ Tanggal awal tidak boleh lebih besar dari akhir!";
+                setTimeout(() => pesanGagal.classList.add('d-none'), 3000);
+                return;
+            }
+
+            isiTabelData.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-3">⏳ Mencari data...</td></tr>';
+            wadahPagination.innerHTML = '';
+            
+            google.script.run
+                .withSuccessHandler(function(data) {
+                    dataGlobal = data;
+                    halamanSaatIni = 1;
+                    renderHalaman();
+                })
+                .withFailureHandler(function(err) {
+                    pesanGagal.classList.remove('d-none');
+                    teksError.textContent = "❌ Gagal mencari: " + err;
+                    setTimeout(() => pesanGagal.classList.add('d-none'), 3000);
+                })
+                .ambilDataByTanggal(tglAwal.value, tglAkhir.value);
+        });
+
+        function renderHalaman() {
+            isiTabelData.innerHTML = "";
+
+            if(dataGlobal.length <= 1){
+                isiTabelData.innerHTML = '<tr><td colspan="4" class="text-center text-danger py-3">❌ Tidak ada data ditemukan</td></tr>';
+                wadahPagination.innerHTML = '';
+                return;
+            }
+
+            const totalData = dataGlobal.length - 1;
+            const totalHalaman = Math.ceil(totalData / ITEM_PER_PAGE);
+
+            const mulai = (halamanSaatIni - 1) * ITEM_PER_PAGE + 1;
+            const selesai = mulai + ITEM_PER_PAGE;
+            const dataDitampilkan = dataGlobal.slice(mulai, selesai);
+
+            dataDitampilkan.forEach(barisData => {
+                let baris = document.createElement('tr');
+                barisData.forEach( isi => {
+                    let kolom = document.createElement('td');
+                    kolom.textContent = isi;
+                    baris.appendChild(kolom);
+                });
+                isiTabelData.appendChild(baris);
+            });
+
+            buatNavigasiHalaman(totalHalaman);
+        }
+
+        function buatNavigasiHalaman(totalHalaman) {
+            wadahPagination.innerHTML = '';
+
+            const btnPrev = document.createElement('button');
+            btnPrev.className = 'page-btn page-nav';
+            btnPrev.innerHTML = '<i class="bi bi-chevron-left"></i>';
+            btnPrev.disabled = (halamanSaatIni === 1);
+            btnPrev.onclick = () => { halamanSaatIni--; renderHalaman(); };
+            wadahPagination.appendChild(btnPrev);
+
+            for(let i = 1; i <= totalHalaman; i++){
+                const btnNomor = document.createElement('button');
+                btnNomor.className = 'page-btn ' + (i === halamanSaatIni ? 'active' : '');
+                btnNomor.textContent = i;
+                btnNomor.onclick = () => { halamanSaatIni = i; renderHalaman(); };
+                wadahPagination.appendChild(btnNomor);
+            }
+
+            const btnNext = document.createElement('button');
+            btnNext.className = 'page-btn page-nav';
+            btnNext.innerHTML = '<i class="bi bi-chevron-right"></i>';
+            btnNext.disabled = (halamanSaatIni === totalHalaman);
+            btnNext.onclick = () => { halamanSaatIni++; renderHalaman(); };
+            wadahPagination.appendChild(btnNext);
+        }
+
+    </script>
+
+</body>
+</html>

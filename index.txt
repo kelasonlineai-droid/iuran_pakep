@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Catatan Iuran Pakep</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            background-color: #f0f4f8;
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            padding: 0;
+            font-size: 14px; /* ✅ Font dasar lebih kecil */
+            line-height: 1.4;
+        }
+        .container {
+            width: 100%;
+            max-width: 100%;
+            padding: 8px; /* ✅ Ruang pinggir lebih kecil */
+            margin: 0 auto;
+            position: relative; /* ✅ Agar tombol fullscreen bisa posisi absolut */
+        }
+
+        /* ✅ TOMBOL LAYAR PENUH */
+        #btnFullscreen {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            z-index: 99;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            padding: 0;
+            border-radius: 6px;
+            background-color: #e2e8f0;
+            color: #334155;
+            border: none;
+        }
+        #btnFullscreen:hover, #btnFullscreen.active {
+            background-color: #2563eb;
+            color: white;
+        }
+
+        .card {
+            border-radius: 10px; /* ✅ Sudut lebih kecil */
+            border: none;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+            margin-bottom: 8px;
+            background: #ffffff;
+            overflow: hidden;
+        }
+        .card-body {
+            padding: 12px !important; /* ✅ Isi kartu lebih padat */
+        }
+        .header-title {
+            color: #1e293b;
+            font-weight: 700;
+            font-size: 1.1rem; /* ✅ Judul lebih kecil */
+        }
+        .sub-title {
+            font-size: 0.75rem; /* ✅ Keterangan lebih kecil */
+            color: #64748b;
+        }
+        .form-label {
+            font-weight: 500;
+            color: #344767;
+            font-size: 0.8rem; /* ✅ Label lebih kecil */
+            margin-bottom: 3px;
+        }
+        .form-control, .form-select, .input-group-text {
+            padding: 8px 10px; /* ✅ Kotak input lebih kecil */
+            font-size: 0.9rem;
+            border-radius: 6px;
+            border: 1px solid #d2d6dc;
+            height: auto;
+        }
+        .input-group-text {
+            background-color: #f8fafc;
+        }
+        .btn {
+            padding: 8px 12px; /* ✅ Tombol lebih kecil */
+            font-size: 0.85rem;
+            font-weight: 500;
+            border-radius: 6px;
+            border: none;
+            height: 40px; /* ✅ Tinggi tombol seragam */
+        }
+        .btn-primary { background-color: #2563eb; }
+        .btn-primary:active { background-color: #1d4ed8 !important; }
+        .btn-info { background-color: #0ea5e9; color: white; }
+        .btn-info:active { background-color: #0284c7 !important; }
+        .alert { 
+            border-radius: 6px; 
+            font-size: 0.8rem; 
+            padding: 8px 10px; 
+            margin-bottom: 8px;
+        }
+        .small-text { font-size: 0.7rem; }
+
+        /* ✅ DINAMIS SESUAI LAYAR */
+        @media (min-width: 480px) {
+            .container { max-width: 420px; } /* Di layar besar, tetap pas di tengah */
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- ✅ TOMBOL LAYAR PENUH -->
+        <button id="btnFullscreen" title="Mode Layar Penuh">
+            <i class="bi bi-arrows-fullscreen"></i>
+        </button>
+
+        <!-- JUDUL HALAMAN -->
+        <div class="text-center mb-2 mt-1">
+            <h2 class="header-title mb-1">
+                <i class="bi bi-wallet2 text-primary"></i> Catatan Iuran
+            </h2>
+            <p class="sub-title">Halaman Input Pembayaran</p>
+        </div>
+
+        <!-- PESAN NOTIFIKASI -->
+        <div class="alert alert-success text-center d-none" id="pesanSukses" role="alert">
+            <i class="bi bi-check-circle-fill me-1"></i> <span id="teksSukses"></span>
+        </div>
+        <div class="alert alert-danger text-center d-none" id="pesanGagal" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-1"></i> <span id="teksError"></span>
+        </div>
+
+        <!-- KARTU FORM INPUT -->
+        <div class="card">
+            <div class="card-body">
+                <form id="formIuran">
+                    <!-- PILIH NAMA WARGA -->
+                    <div class="mb-2">
+                        <label for="namaWarga" class="form-label">Nama Warga / Anggota</label>
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="bi bi-person-fill text-muted"></i>
+                            </span>
+                            <select class="form-select" id="namaWarga" required>
+                                <option value="" disabled selected>⏳ Memuat...</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- INPUT JUMLAH IURAN -->
+                    <div class="mb-3">
+                        <label for="nominalIuran" class="form-label">Jumlah Iuran (Rp)</label>
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="bi bi-currency-rupiah text-muted"></i>
+                            </span>
+                            <input type="text" class="form-control" id="nominalIuran" placeholder="0" required>
+                        </div>
+                        <small class="text-muted small-text px-1">* Otomatis berformat titik</small>
+                        <input type="hidden" id="nilaiAsli" value="">
+                    </div>
+
+                    <!-- TOMBOL SIMPAN -->
+                    <div class="d-grid mb-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-save2 me-1"></i> Simpan Pembayaran
+                        </button>
+                    </div>
+                </form>
+
+              
+            </div>
+        </div>
+
+        <div class="text-center text-muted mt-1 mb-3">
+            <small class="small-text"><i class="bi bi-info-circle me-1"></i> Sistem Terhubung Google Sheet</small>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        const form = document.getElementById('formIuran');
+        const pesanSukses = document.getElementById('pesanSukses');
+        const pesanGagal = document.getElementById('pesanGagal');
+        const teksSukses = document.getElementById('teksSukses');
+        const teksError = document.getElementById('teksError');
+        const selectNama = document.getElementById('namaWarga');
+        const inputNominal = document.getElementById('nominalIuran');
+        const inputNilaiAsli = document.getElementById('nilaiAsli');
+        const btnFullscreen = document.getElementById('btnFullscreen');
+        const iconFullscreen = btnFullscreen.querySelector('i');
+
+        // ==============================================
+        // ✅FITUR LAYAR PENUH
+        // ==============================================
+        btnFullscreen.addEventListener('click', function() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+                iconFullscreen.className = 'bi bi-fullscreen-exit';
+                btnFullscreen.classList.add('active');
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                    iconFullscreen.className = 'bi bi-arrows-fullscreen';
+                    btnFullscreen.classList.remove('active');
+                }
+            }
+        });
+
+        // ==============================================
+        // ✅ FORMAT RUPIAH OTOMATIS
+        // ==============================================
+        inputNominal.addEventListener('input', function () {
+            let angka = this.value.replace(/\D/g, '');
+            inputNilaiAsli.value = angka;
+            if (angka) this.value = new Intl.NumberFormat('id-ID').format(angka);
+        });
+
+        // ==============================================
+        // ✅ MUAT DAFTAR NAMA WARGA
+        // ==============================================
+        function tampilkanDaftarNama() {
+            google.script.run
+                .withSuccessHandler(function(hasil) {
+                    selectNama.innerHTML = '';
+                    let opsiAwal = document.createElement('option');
+                    opsiAwal.value = "";
+                    opsiAwal.textContent = "-- Pilih Nama --";
+                    opsiAwal.disabled = true;
+                    opsiAwal.selected = true;
+                    selectNama.appendChild(opsiAwal);
+
+                    hasil.forEach(function(item) {
+                        let opsi = document.createElement('option');
+                        opsi.value = item.id;
+                        opsi.textContent = item.nama;
+                        selectNama.appendChild(opsi);
+                    });
+                })
+                .withFailureHandler(function(err) {
+                    selectNama.innerHTML = '<option value="" disabled>❌ ' + err + '</option>';
+                })
+                .getDaftarWarga();
+        }
+        window.onload = tampilkanDaftarNama;
+
+        // ==============================================
+        // ✅ SIMPAN DATA
+        // ==============================================
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            let idTerpilih = selectNama.value;
+            let namaTerpilih = selectNama.options[selectNama.selectedIndex].text;
+            let jumlah = inputNilaiAsli.value;
+
+            if (!idTerpilih || !jumlah || jumlah === "0") {
+                pesanGagal.classList.remove('d-none');
+                teksError.textContent = "⚠️ Pilih nama & isi jumlah dulu!";
+                setTimeout(() => pesanGagal.classList.add('d-none'), 3000);
+                return;
+            }
+
+            pesanSukses.classList.add('d-none');
+            pesanGagal.classList.add('d-none');
+
+            google.script.run
+                .withSuccessHandler(() => {
+                    pesanSukses.classList.remove('d-none');
+                    teksSukses.textContent = "✅ Data berhasil disimpan!";
+                    form.reset();
+                    inputNilaiAsli.value = "";
+                    setTimeout(() => pesanSukses.classList.add('d-none'), 2000);
+                })
+                .withFailureHandler((err) => {
+                    pesanGagal.classList.remove('d-none');
+                    teksError.textContent = "❌ Gagal: " + err;
+                    setTimeout(() => pesanGagal.classList.add('d-none'), 4000);
+                })
+                .simpanDataIuran(idTerpilih, namaTerpilih, jumlah);
+        });
+
+    </script>
+
+</body>
+</html>

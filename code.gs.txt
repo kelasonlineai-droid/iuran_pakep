@@ -1,0 +1,177 @@
+// ==============================================
+// AMBIL DAFTAR WARGA (Sheet: Data Warga)
+// Kolom: A = id | B = namawarga
+// ==============================================
+function getDaftarWarga() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheetWarga = ss.getSheetByName("Data Warga");
+  
+  if (!sheetWarga) throw new Error("❌ Sheet 'Data Warga' tidak ditemukan!");
+
+  var data = sheetWarga.getDataRange().getValues();
+  var daftar = [];
+
+  // Baca dari baris ke-2 (lewati judul)
+  for (var i = 1; i < data.length; i++) {
+    var id = data[i][0];
+    var nama = data[i][1];
+    if (String(id).trim() !== "" && String(nama).trim() !== "") {
+      daftar.push({ id: id, nama: nama });
+    }
+  }
+
+  // ✅ URUTKAN NAMA DARI A KE Z (untuk pilihan input)
+  daftar.sort(function(a, b) {
+    var namaA = a.nama.toUpperCase();
+    var namaB = b.nama.toUpperCase();
+    if (namaA < namaB) return -1;
+    if (namaA > namaB) return 1;
+    return 0;
+  });
+  
+  if (daftar.length === 0) daftar.push({ id: "", nama: "⚠️ Isi data di baris 2 ke bawah dulu!" });
+  return daftar;
+}
+
+// ==============================================
+// SIMPAN DATA IURAN (Sheet: Data iuran)
+// ==============================================
+function simpanDataIuran(id_warga, nama_warga, jumlah) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheetIuran = ss.getSheetByName("Data iuran");
+  
+  if (!sheetIuran) throw new Error("❌ Sheet 'Data iuran' tidak ditemukan!");
+
+  var sekarang = new Date();
+  sheetIuran.appendRow([sekarang, sekarang, id_warga, nama_warga, Number(jumlah)]);
+  return "SUKSES";
+}
+
+// ==============================================
+// ✅ FUNGSI: AMBIL SEMUA DATA
+// ==============================================
+function ambilSemuaDataIuran() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheetIuran = ss.getSheetByName("Data iuran");
+  
+  if (!sheetIuran) throw new Error("❌ Sheet 'Data iuran' tidak ditemukan!");
+
+  var data = sheetIuran.getDataRange().getValues();
+  var dataFilter = prosesDanAmbilKolomPenting(data);
+  
+  // ✅ URUTKAN DATA DI LAPORAN BERDASARKAN NAMA WARGA (A-Z)
+  // Indeks 1 pada dataFilter adalah kolom Nama Warga
+  if (dataFilter.length > 1) {
+    var judul = dataFilter.shift(); // Simpan judul kolom
+    dataFilter.sort(function(a, b) {
+      var namaA = a[1].toUpperCase(); // a[1] = Nama Warga
+      var namaB = b[1].toUpperCase(); // b[1] = Nama Warga
+      if (namaA < namaB) return -1;
+      if (namaA > namaB) return 1;
+      return 0;
+    });
+    dataFilter.unshift(judul); // Kembalikan judul ke paling atas
+  }
+  
+  return dataFilter;
+}
+
+// ==============================================
+// ✅ FUNGSI: AMBIL DATA BERDASARKAN RENTANG TANGGAL
+// ==============================================
+function ambilDataByTanggal(tglAwal, tglAkhir) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheetIuran = ss.getSheetByName("Data iuran");
+  
+  if (!sheetIuran) throw new Error("❌ Sheet 'Data iuran' tidak ditemukan!");
+
+  var data = sheetIuran.getDataRange().getValues();
+  var hasilFilter = [];
+  
+  var mulai = new Date(tglAwal);
+  var selesai = new Date(tglAkhir);
+  selesai.setHours(23, 59, 59);
+
+  for (var i = 1; i < data.length; i++) {
+    var tanggalDiSheet = data[i][0]; 
+    if (tanggalDiSheet instanceof Date && !isNaN(tanggalDiSheet)) {
+      if (tanggalDiSheet >= mulai && tanggalDiSheet <= selesai) {
+        hasilFilter.push(data[i]);
+      }
+    }
+  }
+  
+  hasilFilter.unshift(data[0]);
+  var dataFilter = prosesDanAmbilKolomPenting(hasilFilter);
+  
+  // ✅ URUTKAN HASIL PENCARIAN BERDASARKAN NAMA WARGA (A-Z)
+  if (dataFilter.length > 1) {
+    var judul = dataFilter.shift();
+    dataFilter.sort(function(a, b) {
+      var namaA = a[1].toUpperCase();
+      var namaB = b[1].toUpperCase();
+      if (namaA < namaB) return -1;
+      if (namaA > namaB) return 1;
+      return 0;
+    });
+    dataFilter.unshift(judul);
+  }
+  
+  return dataFilter;
+}
+
+// ==============================================
+// ✅ FUNGSI UTAMA: PENGATUR URUTAN KOLOM
+// URUTAN: Tanggal | Nama Warga | Jumlah (Rp) | Jam
+// ==============================================
+function prosesDanAmbilKolomPenting(dataMentah) {
+  var hasilAkhir = [];
+  
+  for (var i = 0; i < dataMentah.length; i++) {
+    // Ubah format tanggal & jam
+    if (dataMentah[i][0] instanceof Date) {
+      dataMentah[i][0] = Utilities.formatDate(dataMentah[i][0], "GMT+7", "d/M/yyyy");
+    }
+    if (dataMentah[i][1] instanceof Date) {
+      dataMentah[i][1] = Utilities.formatDate(dataMentah[i][1], "GMT+7", "HH:mm");
+    }
+    // Format angka ribuan
+    if (typeof dataMentah[i][4] === 'number') {
+      dataMentah[i][4] = new Intl.NumberFormat('id-ID').format(dataMentah[i][4]);
+    }
+
+    // Susun ulang kolom sesuai permintaan
+    hasilAkhir.push([
+      dataMentah[i][0], // Tanggal
+      dataMentah[i][3], // Nama Warga
+      dataMentah[i][4], // Jumlah (Rp)
+      dataMentah[i][1]  // Jam
+    ]);
+  }
+  
+  // Judul kolom baru
+  if(hasilAkhir.length > 0){
+    hasilAkhir[0] = ["Tanggal", "Nama Warga", "Jumlah (Rp)", "Jam"];
+  }
+  
+  return hasilAkhir;
+}
+
+// ==============================================
+// ✅ ROUTING HALAMAN
+// ==============================================
+function doGet(e) {
+  var action = e && e.parameter.action;
+  if(action == 'laporan'){
+    return HtmlService.createHtmlOutputFromFile('laporan').setTitle('Laporan Data Iuran');
+  } else {
+    return HtmlService.createHtmlOutputFromFile('index').setTitle('Catatan Iuran - Input Data');
+  }
+}
+
+// ==============================================
+// ✅ LINK PENGARAH
+// ==============================================
+function getLinkLaporan() {
+  return ScriptApp.getService().getUrl() + '?action=laporan';
+}
